@@ -1,1 +1,1 @@
-run = "node src/main.js"
+run = "node chess-league-bot/src/main.js"
