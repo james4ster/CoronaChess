@@ -4,7 +4,7 @@ const fs = require('fs');
 const path = require('path');
 
 const { getActiveSeasons } = require('./seasonUtils');
-const { getCurrentWeekStartDate, getMatchupsForWeek, getAllScheduledWeekStartDates } = require('./scheduleUtils');
+const { getCurrentWeekStartDate, getMatchupsForWeek } = require('./scheduleUtils');
 const { transformGameToResultsRow } = require('./utils');
 const { readRange, appendRows, updateScheduleCheckmarks } = require('./services/sheets');
 const { getMonthlyGames } = require('./services/chesscom');
@@ -142,6 +142,20 @@ async function run() {
 
     const scheduledGames = Array.from(matchupToFirstGame.values());
 
+    // --- Read Schedule column J checkmarks for scheduled rows ---
+    const scheduleRowsToCheck = scheduledGames
+      .map(g => g._scheduleRowNumber)
+      .filter(r => r != null);
+
+    const scheduleValues = await readRange(`Schedule!J2:J`);
+    const checkmarkMap = new Map(); // key: row number, value: current checkmark
+    scheduleRowsToCheck.forEach(row => {
+      const idx = row - 2; // adjust for zero-index & header row
+      const val = scheduleValues[idx]?.[0] || '';
+      checkmarkMap.set(row, val);
+    });
+
+    // --- Filter scheduled games to only new ones ---
     const newGames = scheduledGames.filter(game => {
       const keys = makeKeys(
         currentSeasonId,
@@ -151,10 +165,14 @@ async function run() {
         game.black.username
       );
 
-      if (keys.some(k => existingGameIDs.has(k))) {
-        return false; // already processed
-      }
+      // Skip if game already exists in Results
+      if (keys.some(k => existingGameIDs.has(k))) return false;
 
+      // Skip if Schedule row already has a checkmark
+      const rowCheckmark = game._scheduleRowNumber ? checkmarkMap.get(game._scheduleRowNumber) : '';
+      if (rowCheckmark === '✓') return false;
+
+      // Otherwise, mark as processed
       keys.forEach(k => existingGameIDs.add(k));
       return true;
     });
