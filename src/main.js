@@ -39,10 +39,24 @@ async function run() {
 
     const existingResultsRows = await readRange('Results!A2:H') || [];
     const existingGameIDs = new Set(
-      existingResultsRows
-        .map(r => `${(r[2] || '').toLowerCase()}|${r[0] || ''}|${r[1] || ''}`)
-        .filter(Boolean)
+      existingResultsRows.map(r => {
+        const seasonId = r[0] || '';
+        const tier = r[1] || '';
+        const weekStart = r[3] || '';
+        const player1 = (r[4] || '').toLowerCase();
+        const player2 = (r[5] || '').toLowerCase();
+        return `${seasonId}|${tier}|${weekStart}|${player1}|${player2}`;
+      })
     );
+
+    function makeKeys(seasonId, tier, weekStart, white, black) {
+      const p1 = white.toLowerCase();
+      const p2 = black.toLowerCase();
+      return [
+        `${seasonId}|${tier}|${weekStart}|${p1}|${p2}`,
+        `${seasonId}|${tier}|${weekStart}|${p2}|${p1}`
+      ];
+    }
 
     const scheduledMatchups = new Set();
     const scheduledUsernames = new Set();
@@ -129,9 +143,19 @@ async function run() {
     const scheduledGames = Array.from(matchupToFirstGame.values());
 
     const newGames = scheduledGames.filter(game => {
-      const dedupKey = `${(game.uuid || '').trim().toLowerCase()}|${currentSeasonId}|${currentGameType}`;
-      if (existingGameIDs.has(dedupKey)) return false;
-      existingGameIDs.add(dedupKey);
+      const keys = makeKeys(
+        currentSeasonId,
+        currentGameType,
+        currentWeekStartDate,
+        game.white.username,
+        game.black.username
+      );
+
+      if (keys.some(k => existingGameIDs.has(k))) {
+        return false; // already processed
+      }
+
+      keys.forEach(k => existingGameIDs.add(k));
       return true;
     });
 
