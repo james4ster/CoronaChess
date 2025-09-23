@@ -1,4 +1,3 @@
-// src/main.js
 require('dotenv').config();
 const fs = require('fs');
 const path = require('path');
@@ -23,11 +22,19 @@ async function run() {
     return;
   }
 
+  // --- Read all players to map usernames -> display names
+  const playersRows = await readRange('Players!A2:B'); // Column A = Username, B = DisplayName
+  const usernameToDisplayName = new Map();
+  playersRows.forEach(row => {
+    const username = row[0]?.toLowerCase().trim();
+    const displayName = row[1]?.trim();
+    if (username && displayName) usernameToDisplayName.set(username, displayName);
+  });
+
   for (const season of allSeasons) {
     const currentSeasonId = season.SeasonID;
     const currentGameType = season.GameType;
 
-    // Get current week start date
     const currentWeekStartDate = await getCurrentWeekStartDate(currentSeasonId, new Date());
     if (!currentWeekStartDate) {
       console.warn(`No valid current week start date found for SeasonID ${currentSeasonId}. Skipping.`);
@@ -95,14 +102,15 @@ async function run() {
           allGames.push(...filtered);
         }
       } catch (err) {
-        console.error(`Failed fetching games for ${username}:`, err.message);
+        if (!err.response || err.response.status !== 404) {
+          console.error(`Failed fetching games for ${username}:`, err.message);
+        }
       }
     }
 
     const outputPath = path.join(dataDir, `games_${currentSeasonId}_${currentGameType}_${currentWeekStartDate}.json`);
     fs.writeFileSync(outputPath, JSON.stringify(allGames, null, 2));
 
-    // --- Pick the correct game per matchup using EarlyFlag ---
     const matchupToFirstGame = new Map();
     for (const game of allGames) {
       const gameDate = game.end_time ? new Date(game.end_time * 1000) : null;
@@ -142,20 +150,18 @@ async function run() {
 
     const scheduledGames = Array.from(matchupToFirstGame.values());
 
-    // --- Read Schedule column J checkmarks for scheduled rows ---
     const scheduleRowsToCheck = scheduledGames
       .map(g => g._scheduleRowNumber)
       .filter(r => r != null);
 
     const scheduleValues = await readRange(`Schedule!J2:J`);
-    const checkmarkMap = new Map(); // key: row number, value: current checkmark
+    const checkmarkMap = new Map();
     scheduleRowsToCheck.forEach(row => {
-      const idx = row - 2; // adjust for zero-index & header row
+      const idx = row - 2;
       const val = scheduleValues[idx]?.[0] || '';
       checkmarkMap.set(row, val);
     });
 
-    // --- Filter scheduled games to only new ones ---
     const newGames = scheduledGames.filter(game => {
       const keys = makeKeys(
         currentSeasonId,
@@ -165,21 +171,24 @@ async function run() {
         game.black.username
       );
 
-      // Skip if game already exists in Results
       if (keys.some(k => existingGameIDs.has(k))) return false;
 
-      // Skip if Schedule row already has a checkmark
       const rowCheckmark = game._scheduleRowNumber ? checkmarkMap.get(game._scheduleRowNumber) : '';
       if (rowCheckmark === '✓') return false;
 
-      // Otherwise, mark as processed
       keys.forEach(k => existingGameIDs.add(k));
       return true;
     });
 
-    const resultsRows = newGames.map(game =>
-      transformGameToResultsRow(game, currentSeasonId, currentWeekStartDate, currentGameType)
-    );
+    const resultsRows = newGames.map(game => {
+      const row = transformGameToResultsRow(game, currentSeasonId, currentWeekStartDate, currentGameType);
+
+      // --- Add DisplayNames for Results columns AC (28) and AD (29)
+      row[28] = usernameToDisplayName.get(game.white.username?.toLowerCase()?.trim()) || game.white.username;
+      row[29] = usernameToDisplayName.get(game.black.username?.toLowerCase()?.trim()) || game.black.username;
+
+      return row;
+    });
 
     if (resultsRows.length > 0) {
       await appendRows('Results!A3', resultsRows);
