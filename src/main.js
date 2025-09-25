@@ -8,6 +8,7 @@ const { transformGameToResultsRow } = require('./utils');
 const { readRange, appendRows, updateScheduleCheckmarks } = require('./services/sheets');
 const { getMonthlyGames } = require('./services/chesscom');
 const { notifyCommissioner } = require('./notifications/commissioner');
+const { notifyUsers } = require('./notifications/sendToDiscord');
 
 const express = require('express');
 
@@ -193,6 +194,14 @@ async function run() {
     if (resultsRows.length > 0) {
       await appendRows('Results!A3', resultsRows);
       console.log(`Appended ${resultsRows.length} new games for SeasonID ${currentSeasonId}, GameType ${currentGameType}.`);
+
+      // --- NOTIFY DISCORD USERS FOR EACH GAME
+      for (const game of newGames) {
+        await notifyUsers(game, currentSeasonId, currentGameType, currentWeekStartDate, [
+          //process.env.NATE_DISCORD_ID,
+          process.env.JAMIE_DISCORD_ID
+        ]);
+      }
 
       const checkmarkUpdates = newGames
         .filter(g => g._scheduleRowNumber)

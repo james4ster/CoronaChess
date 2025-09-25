@@ -21,8 +21,8 @@ async function debug() {
     console.log('All scheduled week start dates:', allWeeks);
 
     // Optionally check games for one user
-    if (season.SeasonID === '14-standard-A') {
-      const testUser = 'fgrrghg'; // replace with a username
+    if (season.SeasonID === '14-960-A') {
+      const testUser = 'PapsR'; // replace with a username
       try {
         const date = new Date();
         const year = date.getFullYear();

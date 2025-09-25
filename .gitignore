@@ -144,3 +144,7 @@ chess-league-bot/config/credentials.json
 # Ignore debugRun.js
 chess-league-bot/src/debugRun.js
 >>>>>>> e3b9911 (updated logs to reduce amount shown for unplayed games)
+
+# Ignore testDM.js
+/src/notifications/testDM.js
+
