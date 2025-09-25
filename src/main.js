@@ -197,10 +197,13 @@ async function run() {
 
       // --- NOTIFY DISCORD USERS FOR EACH GAME
       for (const game of newGames) {
-        await notifyUsers(game, currentSeasonId, currentGameType, currentWeekStartDate, [
-          //process.env.NATE_DISCORD_ID,
-          process.env.JAMIE_DISCORD_ID
-        ]);
+        await notifyUsers(
+          game,
+          currentSeasonId,
+          currentGameType,
+          currentWeekStartDate,
+          [process.env.JAMIE_DISCORD_ID]  // only this one
+        );
       }
 
       const checkmarkUpdates = newGames

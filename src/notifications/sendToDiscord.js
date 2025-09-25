@@ -24,19 +24,17 @@ client.login(process.env.CHESS_BOT_DISCORD_TOKEN);
  * @param {string[]} discordUserIds - array of Discord IDs to notify
  */
 async function notifyUsers(game, seasonId, gameType, weekStart, discordUserIds) {
-  const player1Name = usernameToDisplayName.get(game.white.username.toLowerCase()) || game.white.username;
-  const player2Name = usernameToDisplayName.get(game.black.username.toLowerCase()) || game.black.username;
-
   const weekStartStr = weekStart instanceof Date
     ? weekStart.toISOString().slice(0, 10)
     : weekStart;
 
-  const message = `♟️ **Chess Result**
+  const message = `♟️ Chess Score Update
 Season: ${seasonId}
 Game Type: ${gameType}
 Week Start: ${weekStartStr}
-Player 1: ${player1Name} — ${game.white.result || 'N/A'}
-Player 2: ${player2Name} — ${game.black.result || 'N/A'}`;
+Player 1: ${game.white.username}
+Player 2: ${game.black.username}
+Result: ${game.result || 'N/A'}`;
 
   for (const id of discordUserIds) {
     try {
