@@ -202,7 +202,10 @@ async function run() {
           currentSeasonId,
           currentGameType,
           currentWeekStartDate,
-          [process.env.JAMIE_DISCORD_ID]  // only this one
+          [
+            process.env.JAMIE_DISCORD_ID,
+            process.env.NATHAN_DISCORD_ID
+          ]
         );
       }
 
