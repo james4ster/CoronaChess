@@ -98,7 +98,7 @@ async function run() {
             const rulesMatch =
               (currentGameType === 'chess' && g.rules === 'chess') ||
               (currentGameType === 'chess960' && g.rules === 'chess960');
-            const isTenMinute = g.time_control?.minutes === 10; // Ensure game is 10-minutes
+            const isTenMinute = g.time_control === '600'; // Ensure game is 10-minutes
             
             return white && black && scheduledUsernames.has(white) && scheduledUsernames.has(black) && rulesMatch &&
                isTenMinute;
