@@ -111,7 +111,7 @@ async function getAllScheduledWeekStartDates(seasonId) {
 
   schedule.forEach(row => {
     const ws = getWeekStartDateFromRow(row);
-    console.log('Row:', row, 'Parsed week start:', ws); // debug
+    // console.log('Row:', row, 'Parsed week start:', ws); // debug
     if (ws) dateSet.add(ws);
   });
 

@@ -202,7 +202,7 @@ async function run() {
 
       if (resultsRows.length > 0) {
         await appendRows('Results!A3', resultsRows);
-        console.log(`Appended ${resultsRows.length} new games for SeasonID ${currentSeasonId}, GameType ${currentGameType}, Week Start ${weekStartDate}.`);
+        //console.log(`Appended ${resultsRows.length} new games for SeasonID ${currentSeasonId}, GameType ${currentGameType}, Week Start ${weekStartDate}.`);
 
         for (const game of newGames) {
           await notifyUsers(
