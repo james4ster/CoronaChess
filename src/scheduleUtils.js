@@ -36,7 +36,10 @@ function mapRowToScheduleObject(row, rowNumber) {
 }
 
 function getWeekStartDateFromRow(row) {
-  return row.WeekStart || null;
+  if (!row.WeekStart) return null;
+  const d = new Date(row.WeekStart);
+  if (isNaN(d.getTime())) return null;
+  return d.toISOString().slice(0, 10); // always 'YYYY-MM-DD'
 }
 
 async function getScheduleForSeason(seasonId) {
@@ -108,6 +111,7 @@ async function getAllScheduledWeekStartDates(seasonId) {
 
   schedule.forEach(row => {
     const ws = getWeekStartDateFromRow(row);
+    console.log('Row:', row, 'Parsed week start:', ws); // debug
     if (ws) dateSet.add(ws);
   });
 
