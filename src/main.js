@@ -233,13 +233,18 @@ async function run() {
 
 // --- Express server block ---
 const app = express();
-app.get('/run', async (req, res) => {
+
+app.get("/", (req, res) => {
+  res.send("✅ Corona Chess bot is running!");
+});
+
+app.get("/run", async (req, res) => {
   try {
     await run();
-    res.status(200).send('Chess bot run complete');
+    res.status(200).send("Chess bot run complete");
   } catch (err) {
     console.error(err);
-    res.status(500).send('Error running chess bot');
+    res.status(500).send("Error running chess bot");
   }
 });
 
